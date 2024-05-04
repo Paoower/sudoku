@@ -1,4 +1,6 @@
-pakage main
+package main
+
+import "fmt"
 
 func main() {
 	if resSudoku() {

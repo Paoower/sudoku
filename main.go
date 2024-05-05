@@ -8,32 +8,27 @@ import (
 )
 
 func main() {
-	// Récupérer le plateau de Sudoku à partir des arguments donné.
+	// Récupérer la grille  de Sudoku à partir des arguments donné.
 	board := os.Args[1:]
-
-	// Vérifier que le plateau est valide. S'il ne l'est pas, afficher "Error".
+	// Vérifier que le sudoku est valide.
 	if len(board) != 9 || !isValidBoard(board) {
-		fmt.Println("Error")
+		fmt.Println("Erreur la grille n'est pas de bonne taille.")
 		return
 	}
-
-	// Créer une copie du plateau pour vérifier s'il y a plusieurs solutions.
+	// Créer une copie du sudoku pour vérifier s'il y a plusieurs solutions.
 	boardCopy := make([]string, len(board))
 	copy(boardCopy, board)
-
-	// Essaye de résoudre le Sudoku. Sinon affiche "Error".
-	if !solveSudoku(board, 0, 0) {
-		fmt.Println("Error")
+	// Essaye de résoudre le Sudoku.
+	if !solveSudoku(board, 0, 0, false) {
+		fmt.Println("Erreur la grille impossible à résoudre.")
 		return
 	}
-
-	// Vérifie s'il y a plusieurs solutions. Si c'est le cas, afficher "Error".
-	if solveSudoku(boardCopy, 0, 0) && !areBoardsEqual(board, boardCopy) {
-		fmt.Println("Error")
+	// Vérifie s'il y a plusieurs solutions.
+	if solveSudoku(boardCopy, 0, 0, true) && !areBoardsEqual(board, boardCopy) {
+		fmt.Println("Erreur la grille a plusieurs solution")
 		return
 	}
-
-	// Afficher la solution.
+	// Affiche la solution.
 	for _, row := range board {
 		for _, num := range row {
 			z01.PrintRune(num)
@@ -42,7 +37,7 @@ func main() {
 	}
 }
 
-// Vérifie si deux grilles de Sudoku sont identiques.
+// Vérifie si les deux grilles de Sudoku sont identiques.
 func areBoardsEqual(board1, board2 []string) bool {
 	for i := range board1 {
 		if board1[i] != board2[i] {
@@ -64,7 +59,7 @@ func isValidBoard(board []string) bool {
 	return true
 }
 
-// Vérifie si un chiffre est valide la ou il est.
+// Vérifie si un chiffre est valide là où il se trouve.
 func isValid(board []string, row, col int) bool {
 	num := board[row][col]
 	board[row] = board[row][:col] + "." + board[row][col+1:]
@@ -78,7 +73,7 @@ func isValid(board []string, row, col int) bool {
 }
 
 // Essaie de résoudre le Sudoku.
-func solveSudoku(board []string, row, col int) bool {
+func solveSudoku(board []string, row, col int, reverse bool) bool {
 	if col == 9 {
 		row++
 		col = 0
@@ -87,11 +82,22 @@ func solveSudoku(board []string, row, col int) bool {
 		}
 	}
 	if board[row][col] != '.' {
-		return solveSudoku(board, row, col+1)
+		return solveSudoku(board, row, col+1, reverse)
 	}
-	for num := '1'; num <= '9'; num++ {
+	start := '1'
+	end := '9'
+	step := 1
+	if reverse {
+		start = '9'
+		end = '1'
+		step = -1
+	}
+	for num := start; ; num = rune(int(num) + step) {
+		if (step > 0 && num > end) || (step < 0 && num < end) {
+			break
+		}
 		board[row] = board[row][:col] + string(num) + board[row][col+1:]
-		if isValid(board, row, col) && solveSudoku(board, row, col+1) {
+		if isValid(board, row, col) && solveSudoku(board, row, col+1, reverse) {
 			return true
 		}
 		board[row] = board[row][:col] + "." + board[row][col+1:]
